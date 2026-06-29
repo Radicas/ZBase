@@ -1,0 +1,15 @@
+# ZBase 选项定义模块
+# 控制静态/动态库的 CRT 链接方式（详见 architecture.md §12.4）
+
+if(BUILD_SHARED_LIBS)
+    set(ZBASE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL" CACHE STRING "MSVC 运行时库" FORCE)
+    set(ZBASE_STATIC_DEFINE OFF)
+else()
+    set(ZBASE_MSVC_RUNTIME_LIBRARY "MultiThreaded" CACHE STRING "MSVC 运行时库" FORCE)
+    set(ZBASE_STATIC_DEFINE ON)
+endif()
+
+# 强制 CMake 用一致的 CRT（避免 CRT 混用，致命风险）
+set(CMAKE_MSVC_RUNTIME_LIBRARY ${ZBASE_MSVC_RUNTIME_LIBRARY} CACHE STRING "" FORCE)
+
+message(STATUS "ZBase 构建模式: ${ZBASE_MSVC_RUNTIME_LIBRARY} (BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})")
