@@ -51,12 +51,9 @@ target_compile_features(zbase PUBLIC cxx_std_20)
 zbase_apply_compile_options(zbase)
 
 # 版本与 soname
-# Task 0 阶段 dummy.cpp 无任何导出符号，用 WINDOWS_EXPORT_ALL_SYMBOLS
-# 让 MSVC 生成 zbase.lib（import library），Task 1 引入 ZBASE_API 后可移除
 set_target_properties(zbase PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 0
-    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
 # install 规则

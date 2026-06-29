@@ -8,9 +8,6 @@
  */
 namespace zbase {
 namespace platform {
-// 注意：非 inline 才能让 MSVC 在 .obj 中产生符号，
-// 配合 WINDOWS_EXPORT_ALL_SYMBOLS 生成 zbase.lib。
-// Task 1 起此文件可删除。
-void dummy_link_anchor() {}
+inline void dummy_link_anchor() {}
 }  // namespace platform
 }  // namespace zbase
