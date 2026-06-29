@@ -8,14 +8,18 @@ function(zbase_apply_compile_options target)
     endif()
 
     if(MSVC)
-        # /utf-8 同时设源码和执行字符集
-        target_compile_options(${target} PRIVATE /utf-8 /W4 /permissive- /WX-)
-        # 多处理器编译加速
-        target_compile_options(${target} PRIVATE /MP)
+        # /utf-8 是字符集约定（公共接口的一部分），PUBLIC 让依赖方继承
+        target_compile_options(${target} PUBLIC /utf-8)
+        # 严格警告级别 + 标准 conformant 模式 + 多处理器编译仅对 zbase 自己生效
+        target_compile_options(${target} PRIVATE /W4 /permissive- /WX- /MP)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # 字符集约定 PUBLIC
+        target_compile_options(${target} PUBLIC
+            -finput-charset=UTF-8 -fexec-charset=UTF-8
+        )
+        # 严格警告 + 默认隐藏符号仅对 zbase 自己生效
         target_compile_options(${target} PRIVATE
             -Wall -Wextra -Wpedantic
-            -finput-charset=UTF-8 -fexec-charset=UTF-8
             -fvisibility=hidden -fvisibility-inlines-hidden
         )
         if(BUILD_SHARED_LIBS)
