@@ -1,0 +1,33 @@
+# 构建产物
+build/
+build-*/
+build-*/
+install-test/
+
+# 编译中间文件
+*.obj
+*.o
+*.a
+*.so
+*.so.*
+*.dll
+*.dylib
+*.lib
+*.exp
+*.pdb
+*.exe
+
+# IDE / 编辑器
+.vs/
+.vscode/
+CMakeUserPresets.json
+*.user
+
+# 第三方库构建产物（GoogleTest 等）
+source/thirdparty/googletest-1.17.0/build/
+
+# 临时测试文件
+zbase_test_*
+zbase_demo_*
+zbase_integration_*
+zbase_cpp_*
