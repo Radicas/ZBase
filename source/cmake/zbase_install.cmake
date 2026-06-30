@@ -4,10 +4,11 @@
 include(GNUInstallDirs)
 
 function(zbase_setup_install target)
-    # 头文件
+    # 头文件（排除 internal/，详见 architecture.md §14.2）
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+            PATTERN "internal" EXCLUDE)
 
     # 库 + 运行时
     install(TARGETS ${target}

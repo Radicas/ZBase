@@ -43,28 +43,6 @@ ZBASE_API void z_perf_reset(void);
 
 #ifdef __cplusplus
 }  // extern "C"
-
-#include <string_view>
-
-namespace zbase {
-
-/// RAII 性能打点（C++ 包装，header-only）
-class PerfScope {
- public:
-  explicit PerfScope(const char* name) : name_(name) { z_perf_start(name_); }
-  explicit PerfScope(std::string_view name) : name_(name.data()) { z_perf_start(name_); }
-  ~PerfScope() { if (name_) z_perf_end(name_); }
-  PerfScope(const PerfScope&) = delete;
-  PerfScope& operator=(const PerfScope&) = delete;
- private:
-  const char* name_;   ///< 打点名指针（不拥有，调用方保证生命周期）
-};
-
-}  // namespace zbase
-
-/// 作用域打点宏（C++ 用）
-#define Z_PERF_SCOPE(name) ::zbase::PerfScope _zperf_scope_##__LINE__(name)
-
-#endif  // __cplusplus
+#endif
 
 #endif  // ZBASE_PERF_H_

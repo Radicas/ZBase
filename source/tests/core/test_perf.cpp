@@ -11,6 +11,7 @@
 #include "zbase/error.h"
 #include "zbase/perf.h"
 #include "zbase/time.h"
+#include "zbase++/perf.hpp"
 
 TEST(Perf, StartEnd_NoCrash) {
     z_perf_reset();
@@ -76,7 +77,7 @@ TEST(Perf, Nested_SameName) {
 TEST(Perf, Scope_Macro) {
     z_perf_reset();
     {
-        Z_PERF_SCOPE("scoped_task");
+        ZBASE_PERF_SCOPE("scoped_task");
         z_time_sleep_ms(5);
     }
     // 作用域结束后应能查到该 name 的累计（通过 dump 不崩验证）
