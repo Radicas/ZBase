@@ -11,6 +11,7 @@
 
 #include "zbase/log.h"
 #include "zbase/error.h"
+#include "zbase/internal/c_api_guard.hpp"
 #include "zbase/time.h"
 #include "core/log/console.hpp"
 
@@ -41,9 +42,11 @@ const char* LevelName(z_log_level_t l) {
 extern "C" {
 
 int z_log_init(z_log_level_t level) {
+    ZBASE_C_API_BEGIN
     zbase::log::InitConsoleUtf8();
     g_min_level.store(static_cast<int>(level), std::memory_order_relaxed);
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 void z_log_shutdown(void) {

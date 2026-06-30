@@ -4,9 +4,11 @@
  * @date 2026-06-29
  * @version 0.1.0
  * @brief 字符串工具 C ABI
- * @details 提供 split / join / replace / trim / tolower / toupper / utf8_len 等
- *          9 个 C ABI 函数。所有返回字符串的函数都由库内申请内存，调用方必须
- *          使用 z_string_free 或 z_string_free_array 释放，禁止外部 free。
+ * @details 提供 split / join / replace / trim / tolower / toupper / free / free_array
+ *          共 8 个 ZBASE_API 导出函数，外加 utf8_len 一个 static inline 函数（纯算法，
+ *          无需导出，避免 YAGNI 守门超标，详见 phase-1-working-file.md §4.28）。
+ *          所有返回字符串的函数都由库内申请内存，调用方必须使用 z_string_free 或
+ *          z_string_free_array 释放，禁止外部 free。
  */
 
 #ifndef ZBASE_STRING_H_
@@ -78,14 +80,6 @@ ZBASE_API int z_string_tolower(const char* input, char** out);
 ZBASE_API int z_string_toupper(const char* input, char** out);
 
 /**
- * @brief 计算 UTF-8 字符串的字符数（不是字节数）
- * @param input 输入（必须以 \0 终止）
- * @return 字符数；input 为 NULL 时返回 0
- * @note 非法字节按 1 字符宽容处理
- */
-ZBASE_API size_t z_string_utf8_len(const char* input);
-
-/**
  * @brief 释放库内申请的字符串
  * @param s 由 z_string_* 申请的字符串指针，可为 NULL
  */
@@ -99,7 +93,28 @@ ZBASE_API void z_string_free(char* s);
 ZBASE_API void z_string_free_array(char** arr, size_t count);
 
 #ifdef __cplusplus
-}
+}  // extern "C"
 #endif
+
+/**
+ * @brief 计算 UTF-8 字符串的字符数（不是字节数）
+ * @param input 输入（必须以 \0 终止）
+ * @return 字符数；input 为 NULL 时返回 0
+ * @note 非法字节按 1 字符宽容处理；纯算法，作为 static inline 不占导出符号
+ */
+static inline size_t z_string_utf8_len(const char* input) {
+    if (input == NULL) return 0;
+    size_t count = 0;
+    for (size_t i = 0; input[i] != '\0'; ) {
+        unsigned char c = (unsigned char)input[i];
+        if (c < 0x80) i += 1;
+        else if ((c & 0xE0) == 0xC0) i += 2;
+        else if ((c & 0xF0) == 0xE0) i += 3;
+        else if ((c & 0xF8) == 0xF0) i += 4;
+        else { ++i; }  /* 非法字节，按 1 字符算（v0.1 宽容处理） */
+        ++count;
+    }
+    return count;
+}
 
 #endif  // ZBASE_STRING_H_

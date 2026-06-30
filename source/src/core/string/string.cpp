@@ -11,6 +11,7 @@
 
 #include "zbase/string.h"
 #include "zbase/error.h"
+#include "zbase/internal/c_api_guard.hpp"
 
 #include <cctype>
 #include <cstdlib>
@@ -38,6 +39,7 @@ extern "C" {
 int z_string_split(const char* input, size_t input_len,
                    const char* sep,
                    char*** out_arr, size_t* out_count) {
+    ZBASE_C_API_BEGIN
     if (input == nullptr || sep == nullptr || out_arr == nullptr || out_count == nullptr) {
         return Z_ERR_INVALID_ARG;
     }
@@ -69,9 +71,11 @@ int z_string_split(const char* input, size_t input_len,
     *out_arr = arr;
     *out_count = parts.size();
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_string_join(char** arr, size_t count, const char* sep, char** out) {
+    ZBASE_C_API_BEGIN
     if (sep == nullptr || out == nullptr) {
         return Z_ERR_INVALID_ARG;
     }
@@ -89,10 +93,12 @@ int z_string_join(char** arr, size_t count, const char* sep, char** out) {
     if (p == nullptr) return Z_ERR_NOMEM;
     *out = p;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_string_replace(const char* input, const char* from,
                      const char* to, char** out) {
+    ZBASE_C_API_BEGIN
     if (input == nullptr || from == nullptr || to == nullptr || out == nullptr) {
         return Z_ERR_INVALID_ARG;
     }
@@ -109,9 +115,11 @@ int z_string_replace(const char* input, const char* from,
     if (p == nullptr) return Z_ERR_NOMEM;
     *out = p;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_string_trim(const char* input, char** out) {
+    ZBASE_C_API_BEGIN
     if (input == nullptr || out == nullptr) return Z_ERR_INVALID_ARG;
     std::string s(input);
     auto is_space = [](unsigned char c) { return std::isspace(c) != 0; };
@@ -123,9 +131,11 @@ int z_string_trim(const char* input, char** out) {
     if (p == nullptr) return Z_ERR_NOMEM;
     *out = p;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_string_tolower(const char* input, char** out) {
+    ZBASE_C_API_BEGIN
     if (input == nullptr || out == nullptr) return Z_ERR_INVALID_ARG;
     std::string s(input);
     for (char& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
@@ -133,9 +143,11 @@ int z_string_tolower(const char* input, char** out) {
     if (p == nullptr) return Z_ERR_NOMEM;
     *out = p;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_string_toupper(const char* input, char** out) {
+    ZBASE_C_API_BEGIN
     if (input == nullptr || out == nullptr) return Z_ERR_INVALID_ARG;
     std::string s(input);
     for (char& c : s) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
@@ -143,21 +155,7 @@ int z_string_toupper(const char* input, char** out) {
     if (p == nullptr) return Z_ERR_NOMEM;
     *out = p;
     return Z_OK;
-}
-
-size_t z_string_utf8_len(const char* input) {
-    if (input == nullptr) return 0;
-    size_t count = 0;
-    for (size_t i = 0; input[i] != '\0'; ) {
-        unsigned char c = static_cast<unsigned char>(input[i]);
-        if (c < 0x80) i += 1;
-        else if ((c & 0xE0) == 0xC0) i += 2;
-        else if ((c & 0xF0) == 0xE0) i += 3;
-        else if ((c & 0xF8) == 0xF0) i += 4;
-        else { ++i; }  // 非法字节，按 1 字符算（v0.1 宽容处理）
-        ++count;
-    }
-    return count;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 void z_string_free(char* s) {

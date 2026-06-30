@@ -8,6 +8,7 @@
 
 #include "zbase/file.h"
 #include "zbase/error.h"
+#include "zbase/internal/c_api_guard.hpp"
 #include "platform/encoding.hpp"
 #include "platform/file_platform.hpp"
 
@@ -29,6 +30,7 @@
 extern "C" {
 
 int z_file_read_text(const char* path, char** out_buf, size_t* out_len) {
+    ZBASE_C_API_BEGIN
     if (path == nullptr || out_buf == nullptr || out_len == nullptr) {
         return Z_ERR_INVALID_ARG;
     }
@@ -83,6 +85,7 @@ int z_file_read_text(const char* path, char** out_buf, size_t* out_len) {
     *out_len = total;
     return Z_OK;
 #endif
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 }  // extern "C"

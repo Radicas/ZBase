@@ -8,6 +8,7 @@
 
 #include "zbase/file.h"
 #include "zbase/error.h"
+#include "zbase/internal/c_api_guard.hpp"
 #include "platform/file_platform.hpp"
 
 #include <cstdlib>
@@ -28,6 +29,7 @@
 extern "C" {
 
 int z_file_write_text(const char* path, const char* content, size_t len) {
+    ZBASE_C_API_BEGIN
     if (path == nullptr || (content == nullptr && len > 0)) {
         return Z_ERR_INVALID_ARG;
     }
@@ -77,19 +79,24 @@ int z_file_write_text(const char* path, const char* content, size_t len) {
     }
     return Z_OK;
 #endif
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_file_exists(const char* path) {
+    ZBASE_C_API_BEGIN
     if (path == nullptr) return Z_ERR_INVALID_ARG;
     zbase::platform::FileStat st;
     int err = zbase::platform::FileStatGet(path, st);
     if (err != Z_OK) return err;
     return st.exists ? 1 : 0;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_file_mkdir(const char* path) {
+    ZBASE_C_API_BEGIN
     if (path == nullptr) return Z_ERR_INVALID_ARG;
     return zbase::platform::MakeDirs(path);
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 void z_file_free(void* p) {

@@ -11,6 +11,7 @@
 
 #include "zbase/perf.h"
 #include "zbase/error.h"
+#include "zbase/internal/c_api_guard.hpp"
 #include "platform/time_platform.hpp"
 
 #include <algorithm>
@@ -44,6 +45,7 @@ std::unordered_map<std::string, PendingStart> g_pending;              ///< è¿›è¡
 extern "C" {
 
 int z_perf_start(const char* name) {
+    ZBASE_C_API_BEGIN
     if (name == nullptr) return Z_ERR_INVALID_ARG;
     std::lock_guard<std::mutex> lock(g_mutex);
     auto& p = g_pending[name];
@@ -52,9 +54,11 @@ int z_perf_start(const char* name) {
     }
     ++p.ref_count;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_perf_end(const char* name) {
+    ZBASE_C_API_BEGIN
     if (name == nullptr) return Z_ERR_INVALID_ARG;
     uint64_t now = zbase::platform::MonoNowNs();
     std::lock_guard<std::mutex> lock(g_mutex);
@@ -72,6 +76,7 @@ int z_perf_end(const char* name) {
     a.total_ns += elapsed;
     a.count += 1;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 void z_perf_dump(void) {

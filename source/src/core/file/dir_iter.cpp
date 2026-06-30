@@ -11,6 +11,7 @@
 
 #include "zbase/file.h"
 #include "zbase/error.h"
+#include "zbase/internal/c_api_guard.hpp"
 #include "platform/encoding.hpp"
 #include "platform/file_platform.hpp"
 
@@ -40,6 +41,7 @@ struct z_dir_iter {
 extern "C" {
 
 int z_dir_iter_create(const char* path, z_dir_iter** out_iter) {
+    ZBASE_C_API_BEGIN
     if (path == nullptr || out_iter == nullptr) return Z_ERR_INVALID_ARG;
     *out_iter = nullptr;
 
@@ -73,9 +75,11 @@ int z_dir_iter_create(const char* path, z_dir_iter** out_iter) {
 
     *out_iter = it;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 int z_dir_iter_next(z_dir_iter* iter, z_dir_iter_entry_t* out_entry) {
+    ZBASE_C_API_BEGIN
     if (iter == nullptr || out_entry == nullptr) return Z_ERR_INVALID_ARG;
     // 校验 reserved 必须置零（详见 architecture.md §13.2）
     for (size_t i = 0; i < 8; ++i) {
@@ -125,6 +129,7 @@ int z_dir_iter_next(z_dir_iter* iter, z_dir_iter_entry_t* out_entry) {
         return Z_OK;
     }
 #endif
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 void z_dir_iter_destroy(z_dir_iter* iter) {

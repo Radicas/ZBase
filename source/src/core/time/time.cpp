@@ -8,6 +8,7 @@
 
 #include "zbase/time.h"
 #include "zbase/error.h"
+#include "zbase/internal/c_api_guard.hpp"
 #include "platform/time_platform.hpp"
 
 #ifdef _WIN32
@@ -42,6 +43,7 @@ int64_t z_time_now_us(void) {
 }
 
 int z_time_format_iso(int64_t ms, char* buf, size_t buf_size) {
+    ZBASE_C_API_BEGIN
     if (buf == nullptr || buf_size == 0) return Z_ERR_INVALID_ARG;
     // 输出格式 "YYYY-MM-DDTHH:MM:SS.mmm" 共 23 字符 + '\0' = 24 字节
     if (buf_size < 24) return Z_ERR_OVERFLOW;
@@ -60,6 +62,7 @@ int z_time_format_iso(int64_t ms, char* buf, size_t buf_size) {
                           tmv.tm_hour, tmv.tm_min, tmv.tm_sec, millis);
     if (n < 0 || static_cast<size_t>(n) >= buf_size) return Z_ERR_OVERFLOW;
     return Z_OK;
+    ZBASE_C_API_END(Z_ERR_UNKNOWN)
 }
 
 void z_time_sleep_ms(uint32_t ms) {
