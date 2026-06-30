@@ -2,7 +2,7 @@
  * @file zbase.h
  * @author 朱鹏 (Radica Zhu)
  * @date 2026-06-29
- * @version 0.1.0
+ * @version 0.2.0
  * @brief ZBase 公共头：版本宏 + 符号导出宏
  * @details 所有公开头文件应通过 #include "zbase/zbase.h" 引入。
  *          宏定义放在 extern "C" 之外，因为它们是预处理指令，不参与链接。
@@ -13,9 +13,9 @@
 
 /* 版本号宏 */
 #define ZBASE_VERSION_MAJOR 0
-#define ZBASE_VERSION_MINOR 1
+#define ZBASE_VERSION_MINOR 2
 #define ZBASE_VERSION_PATCH 0
-#define ZBASE_VERSION_STRING "0.1.0"
+#define ZBASE_VERSION_STRING "0.2.0"
 
 /* 符号导出宏（详见 architecture.md §12.1） */
 #if defined(ZBASE_STATIC_DEFINE)
@@ -53,7 +53,7 @@ extern "C" {
 
 /**
  * @brief 获取库版本字符串
- * @return 形如 "0.1.0" 的静态字符串
+ * @return 形如 "0.2.0" 的静态字符串
  */
 ZBASE_API const char* z_version(void);
 

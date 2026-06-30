@@ -1,18 +1,19 @@
 <!--
-@file phase-2-working-file.md
+@file phase-2-done.md
 @author 朱鹏 (Radica Zhu)
 @date 2026-06-30
 @version 1.0
-@brief ZBase 第二期（v0.2）工作文件，记录本期范围、注意事项、风险与下一步。
-@details 本文档是"活"文档，随 v0.2 进展持续更新。完成后归档，转入 v0.3 工作文件。
+@brief ZBase 第二期（v0.2）归档文档，记录本期范围、注意事项、风险与最终交付。
+@details 本文档由 phase-2-working-file.md 在 v0.2 完成后归档而来。
+          v0.3 启动时新建 phase-3-working-file.md。
 -->
 
-# ZBase 第二期工作文件（v0.2）
+# ZBase 第二期归档文档（v0.2）
 
 > 本期目标：在 v0.1 稳定基线之上，补齐跨平台 CI、日志文件输出、配置文件解析、性能基准测试四项，让 ZBase 进入"可被外部项目长期依赖"的状态。
 > 整体架构参见 [architecture.md](file:///c:/Repos/ZBase/source/docs/architecture.md)；v0.1 交付参见 [phase-1-done.md](file:///c:/Repos/ZBase/source/docs/phase-1-done.md)。
 
-**状态**：🟦 进行中（Step 1-3 ✅，进行 Step 4）
+**状态**：✅ v0.2 完成（本地 Win MSVC 139/139 PASS；4 个 benchmark 可执行；版本号 0.2.0；tag v0.2.0）
 **更新日期**：2026-06-30
 
 ---
@@ -309,8 +310,8 @@ benchmark 是测试代码，不导出符号，不计入 30 上限。
 | Step 1 | CI 自动化 | ✅ 完成 | commit 46769ee；4 平台矩阵 |
 | Step 2 | log 文件输出 + 滚动 | ✅ 完成 | commit 9dd6f65；120/120 PASS；32 导出 |
 | Step 3 | config 模块 | ✅ 完成 | commit 8499469；139/139 PASS；37 导出 |
-| Step 4 | 性能基准测试套件 | 🟦 进行中 | Google benchmark 1.9.0 |
-| Step 5 | v0.2.0 收尾 | ⬜ 未开始 | |
+| Step 4 | 性能基准测试套件 | ✅ 完成 | commit 7c369f3；Google benchmark 1.9.0；4 个基准 21 项；139/139 PASS |
+| Step 5 | v0.2.0 收尾 | ✅ 完成 | 版本号 bump 至 0.2.0；归档本文档；tag v0.2.0 |
 
 状态图例：⬜ 未开始 / 🟦 进行中 / ✅ 完成 / ⚠️ 阻塞
 

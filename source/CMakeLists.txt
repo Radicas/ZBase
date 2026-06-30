@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(zbase
-    VERSION 0.1.0
+    VERSION 0.2.0
     DESCRIPTION "ZBase 个人跨平台 C/C++ 通用工具动态库"
     LANGUAGES C CXX
 )
