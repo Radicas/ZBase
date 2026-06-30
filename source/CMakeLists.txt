@@ -71,6 +71,9 @@ target_include_directories(zbase
         $<INSTALL_INTERFACE:include>
 )
 target_compile_features(zbase PUBLIC cxx_std_20)
+# 让 zbase 消费者（如 demo.exe）继承 /utf-8 等公共编译选项
+# OBJECT 库的 INTERFACE 属性不会自动传播到 $<TARGET_OBJECTS:..> 消费者
+zbase_apply_compile_options(zbase)
 
 # 动态库构建时也给 zbase 目标本身加 ZBASE_EXPORTS（防御性，避免某些 IDE 重新编译时漏掉）
 if(BUILD_SHARED_LIBS)
