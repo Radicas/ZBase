@@ -30,6 +30,7 @@
 #include <filesystem>
 #include <mutex>
 #include <string>
+#include <thread>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -149,11 +150,17 @@ void RollFiles() {
     RenameFileUtf8(g_file.path, dst1);
 
     // 4. 重新打开空 path（截断模式）
-    if (!OpenOfstreamUtf8(g_file.path, std::ios::binary | std::ios::out | std::ios::trunc)) {
-        g_file.enabled = false;  // 重新打开失败，禁用文件输出
-        return;
+    //    Windows 下 Defender 偶发锁定刚被 rename 的路径，导致瞬时打开失败。
+    //    重试 3 次（每次间隔 5ms）以跨过瞬时锁；全部失败才禁用文件输出。
+    for (int retry = 0; retry < 3; ++retry) {
+        if (OpenOfstreamUtf8(g_file.path, std::ios::binary | std::ios::out | std::ios::trunc)) {
+            g_file.current_size = 0;
+            return;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-    g_file.current_size = 0;
+    // 3 次重试均失败：禁用文件输出（避免后续每次写都尝试打开）
+    g_file.enabled = false;
 }
 
 }  // namespace

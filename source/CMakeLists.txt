@@ -17,6 +17,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 option(BUILD_SHARED_LIBS "构建为动态库（OFF 则静态）" ON)
 option(ZBASE_BUILD_TESTS "构建单元测试" ON)
 option(ZBASE_BUILD_EXAMPLES "构建示例" ON)
+option(ZBASE_BUILD_BENCHMARKS "构建性能基准（默认 OFF，依赖 Google benchmark 1.9.0）" OFF)
 
 # 加载各模块
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -107,4 +108,25 @@ endif()
 # 示例
 if(ZBASE_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+# 性能基准（默认 OFF，需要 Google benchmark 1.9.0）
+if(ZBASE_BUILD_BENCHMARKS)
+    # benchmark 强制静态 + 强制不跑其自带测试，与 GoogleTest 同样模式
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_USE_BUNDLED_GTEST OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+    # Windows 下避免 benchmark 默认使用共享 CRT 与 zbase 不一致
+    if(BUILD_SHARED_LIBS)
+        set(BENCHMARK_FORCE_SHARED_CRT OFF CACHE BOOL "" FORCE)
+    endif()
+    # benchmark 强制静态：局部保存/恢复 BUILD_SHARED_LIBS
+    # （与 GoogleTest 处理方式一致，避免生成 benchmark.dll 导致运行时找不到符号）
+    set(_zbase_prev_build_shared_bench ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(thirdparty/benchmark-1.9.0 EXCLUDE_FROM_ALL)
+    set(BUILD_SHARED_LIBS ${_zbase_prev_build_shared_bench} CACHE BOOL "" FORCE)
+    add_subdirectory(benchmarks)
 endif()
