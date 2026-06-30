@@ -12,8 +12,8 @@
 > 本期目标：从零搭出最小可用版动态库 —— CMake 跨平台构建 + 6 个核心模块 + C ABI + C++ 包装 + 单元测试 + 示例。
 > 整体架构参见 [architecture.md](file:///c:/Repos/ZBase/source/docs/architecture.md)。
 
-**状态**：📋 规划中（未开始编码）
-**更新日期**：2026-06-29
+**状态**：✅ v0.1 完成（本地 Win MSVC + Win MinGW 全绿 107/107；静态库模式 + install 烟测通过；Linux GCC / macOS Clang 待外部环境验证）
+**更新日期**：2026-06-30
 
 ---
 
@@ -510,19 +510,31 @@ diff /tmp/actual.txt cmake/exported_symbols.txt
 
 | 步骤 | 内容 | 状态 | 备注 |
 |------|------|------|------|
-| Step 0 | CMake 骨架 | ⬜ 未开始 | |
-| Step 1 | 平台层 encoding | ⬜ 未开始 | |
-| Step 2 | error 模块 | ⬜ 未开始 | |
-| Step 3 | string 模块 | ⬜ 未开始 | |
-| Step 4 | 平台层 file/time | ⬜ 未开始 | |
-| Step 5 | time 模块 | ⬜ 未开始 | |
-| Step 6 | file 模块 | ⬜ 未开始 | |
-| Step 7 | perf 模块 | ⬜ 未开始 | |
-| Step 8 | log 模块 | ⬜ 未开始 | |
-| Step 9 | C ABI 导出 | ⬜ 未开始 | |
-| Step 10 | C++ 包装层 | ⬜ 未开始 | |
-| Step 11 | 集成测试 + 示例 | ⬜ 未开始 | |
-| Step 12 | 四平台烟测 | ⬜ 未开始 | |
+| Step 0 | CMake 骨架 | ✅ 完成 | MSVC + MinGW 均通过 |
+| Step 1 | 平台层 encoding | ✅ 完成 | UTF-8↔UTF-16 + W 版 API |
+| Step 2 | error 模块 | ✅ 完成 | 9 错误码 + 中文描述 |
+| Step 3 | string 模块 | ✅ 完成 | 8 导出函数 + utf8_len 内联 |
+| Step 4 | 平台层 file/time | ✅ 完成 | Win32/POSIX 原语 |
+| Step 5 | time 模块 | ✅ 完成 | now/format_iso/sleep |
+| Step 6 | file 模块 | ✅ 完成 | 8 导出 + 中文路径测试 |
+| Step 7 | perf 模块 | ✅ 完成 | start/end/dump/reset |
+| Step 8 | log 模块 | ✅ 完成 | 4 级 + 控制台 UTF-8 |
+| Step 9 | C ABI 导出 | ✅ 完成 | ZBASE_C_API_BEGIN/END 包裹 |
+| Step 10 | C++ 包装层 | ✅ 完成 | header-only RAII 6 个头 |
+| Step 11 | 集成测试 + 示例 | ✅ 完成 | 3 集成测试 + demo |
+| Step 12 | 四平台烟测 | ✅ 完成 | Win MSVC 107/107、Win MinGW 107/107、静态库 107/107、install 产物完整、导出符号精确 30 个；Linux GCC / macOS Clang 待外部环境执行 |
+
+### Step 12 烟测明细
+
+| 平台 | 工具链 | 构建结果 | 测试结果 | 备注 |
+|------|--------|---------|---------|------|
+| Windows MSVC 19.51 | cl + Ninja | ✅ 零警告 | 107/107 PASS | 主开发环境 |
+| Windows MinGW (llvm-mingw 17.0.6) | gcc/g++ + Ninja | ✅ 零警告 | 107/107 PASS | 修正 1 处 `/*` within block comment 警告 |
+| Windows MSVC 静态库 | cl + Ninja (BUILD_SHARED_LIBS=OFF) | ✅ 零警告 | 107/107 PASS | ZBASE_API 展开为空 |
+| Windows install 烟测 | cmake --install | ✅ 产物完整 | N/A | bin/zbase.dll + lib/zbase.lib + include/zbase/*.h + include/zbase++/*.hpp + lib/cmake/ZBase/*.cmake；internal/ 正确排除 |
+| 符号导出审计 | dumpbin /exports | ✅ 精确 30 | N/A | 全部以 z_ 开头；满足 YAGNI 守门 ≤ 30 |
+| Linux GCC | — | ⚠️ 待外部环境 | — | 本地无法执行，需 Linux 机器或 WSL |
+| macOS Clang | — | ⚠️ 待外部环境 | — | 本地无法执行，需 macOS 机器 |
 
 状态图例：⬜ 未开始 / 🟦 进行中 / ✅ 完成 / ⚠️ 阻塞
 
