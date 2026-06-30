@@ -1,0 +1,101 @@
+# ZBase 持续集成工作流
+# 触发：push 到 main 或任意 PR
+# 矩阵：4 套工具链（Win MSVC / Win MinGW / Linux GCC / macOS Clang）
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: ${{ matrix.os }} / ${{ matrix.toolchain }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            toolchain: gcc
+            cmake_extra: ""
+          - os: macos-latest
+            toolchain: clang
+            cmake_extra: ""
+          - os: windows-latest
+            toolchain: msvc
+            cmake_extra: ""
+          - os: windows-latest
+            toolchain: mingw
+            cmake_extra: "-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++"
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 CMake + Ninja（跨平台统一）
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.20.0
+          ninjaVersion: latest
+
+      - name: 配置 MSVC 工具链环境（仅 Windows MSVC）
+        if: runner.os == 'Windows' && matrix.toolchain == 'msvc'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: 安装 LLVM-MinGW（仅 Windows MinGW）
+        if: runner.os == 'Windows' && matrix.toolchain == 'mingw'
+        shell: pwsh
+        run: |
+          $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-x86_64.zip"
+          $zip = "$env:TEMP\llvm-mingw.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath "C:\" -Force
+          $mingwBin = "C:\llvm-mingw-20240619-ucrt-x86_64\bin"
+          echo $mingwBin | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: CMake 配置
+        shell: bash
+        run: |
+          cmake -S source -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DZBASE_BUILD_EXAMPLES=ON \
+            -DZBASE_BUILD_TESTS=ON \
+            ${{ matrix.cmake_extra }}
+
+      - name: 构建
+        run: cmake --build build --config Release
+
+      - name: 测试
+        working-directory: build
+        run: ctest --output-on-failure
+
+      - name: 符号导出审计（仅 Linux/macOS）
+        if: runner.os != 'Windows'
+        working-directory: build
+        run: |
+          echo "导出符号列表（应全部以 z_ 开头，且数量 ≤ 40）："
+          nm -D --defined-only libzbase.so 2>/dev/null | awk '$2=="T" && $3 ~ /^z_/ {print $3}' | sort || echo "（动态库未生成或 nm 不可用，跳过）"
+
+      - name: 符号导出审计（仅 Windows）
+        if: runner.os == 'Windows' && matrix.toolchain == 'msvc'
+        working-directory: build
+        shell: cmd
+        run: |
+          echo 导出符号列表应全部以 z_ 开头且数量 ≤ 40：
+          dumpbin /exports zbase.dll | findstr "z_" || echo 跳过
+
+      - name: 上传测试日志（失败时）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log-${{ matrix.os }}-${{ matrix.toolchain }}
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+          if-no-files-found: ignore
+          retention-days: 7
