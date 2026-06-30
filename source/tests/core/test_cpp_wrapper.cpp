@@ -4,7 +4,7 @@
  * @date 2026-06-30
  * @version 0.1.0
  * @brief C++ 包装层冒烟测试
- * @details 验证 zbase++/*.hpp 头文件可正确编译并运行基本流程。
+ * @details 验证 zbase++ 头文件可正确编译并运行基本流程。
  */
 
 #include <gtest/gtest.h>
