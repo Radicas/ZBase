@@ -15,6 +15,7 @@
 #include "zbase++/file.hpp"
 #include "zbase++/log.hpp"
 #include "zbase++/perf.hpp"
+#include "zbase++/perf_utils.hpp"
 #include "zbase++/string.hpp"
 #include "zbase++/time.hpp"
 
@@ -90,6 +91,72 @@ TEST(CppWrapper, PerfScope) {
         zbase::SleepMs(5);
     }
     zbase::PerfDump();
+    zbase::PerfReset();
+    SUCCEED();
+}
+
+// ============ perf_utils 便捷工具测试 ============
+
+TEST(CppWrapper, PerfDumpToString_Basic) {
+    zbase::PerfReset();
+    {
+        ZBASE_PERF_SCOPE("cpp_perf_string_test");
+        zbase::SleepMs(2);
+    }
+    std::string s = zbase::PerfDumpToString();
+    // 应包含打点名和单位"毫秒"
+    EXPECT_NE(s.find("cpp_perf_string_test"), std::string::npos);
+    EXPECT_NE(s.find("毫秒"), std::string::npos);
+    // 不应包含装饰行（PerfDumpToString 不含头尾）
+    EXPECT_EQ(s.find("===="), std::string::npos);
+    zbase::PerfReset();
+}
+
+TEST(CppWrapper, PerfDumpToCsv_WritesFile) {
+    zbase::PerfReset();
+    {
+        ZBASE_PERF_SCOPE("cpp_perf_csv_test");
+        zbase::SleepMs(2);
+    }
+    const char* path = "zbase_cpp_perf_test.csv";
+    EXPECT_TRUE(zbase::PerfDumpToCsv(path));
+    // 读回验证内容
+    zbase::FileReader r(path);
+    std::string content = r.Str();
+    EXPECT_NE(content.find("name,total_ms,count,avg_ms"), std::string::npos);  // 表头
+    EXPECT_NE(content.find("cpp_perf_csv_test"), std::string::npos);
+    std::remove(path);
+    zbase::PerfReset();
+}
+
+TEST(CppWrapper, PerfDumpToText_WritesFile) {
+    zbase::PerfReset();
+    {
+        ZBASE_PERF_SCOPE("cpp_perf_text_test");
+        zbase::SleepMs(2);
+    }
+    const char* path = "zbase_cpp_perf_test.txt";
+    EXPECT_TRUE(zbase::PerfDumpToText(path));
+    zbase::FileReader r(path);
+    std::string content = r.Str();
+    EXPECT_NE(content.find("ZBase 性能统计"), std::string::npos);  // 头部装饰
+    EXPECT_NE(content.find("===="), std::string::npos);            // 装饰行
+    EXPECT_NE(content.find("cpp_perf_text_test"), std::string::npos);
+    std::remove(path);
+    zbase::PerfReset();
+}
+
+TEST(CppWrapper, PerfDumpToLog_NoCrash) {
+    zbase::PerfReset();
+    {
+        ZBASE_PERF_SCOPE("cpp_perf_log_test");
+        zbase::SleepMs(2);
+    }
+    // 用 Logger RAII 包装 init/shutdown
+    {
+        zbase::Logger logger(Z_LOG_LEVEL_INFO);
+        zbase::PerfDumpToLog();  // 不崩即可（输出到 stderr）
+    }
     zbase::PerfReset();
     SUCCEED();
 }
