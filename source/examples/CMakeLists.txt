@@ -1,18 +1,22 @@
 # ZBase 示例
-# 每个 .cpp 编译为独立可执行文件，链接 zbase
-# 排除 use_as_dependency 目录，它是独立的 CMake 项目
+# 每个示例独立一个子目录，目录名即示例名
+# use_as_dependency 是独立 CMake 项目，不在此构建
 
-file(GLOB_RECURSE ZBASE_EXAMPLE_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+file(GLOB ZBASE_EXAMPLE_DIRS LIST_DIRECTORIES true CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/*"
 )
-list(FILTER ZBASE_EXAMPLE_SOURCES EXCLUDE REGEX "${CMAKE_CURRENT_SOURCE_DIR}/use_as_dependency")
 
-foreach(src ${ZBASE_EXAMPLE_SOURCES})
-    get_filename_component(name ${src} NAME_WE)
-    add_executable(${name} ${src})
-    target_link_libraries(${name} PRIVATE zbase)
-    # 让 demo.exe 与 zbase.dll 输出到同一目录（构建根），避免运行时 STATUS_DLL_NOT_FOUND
-    set_target_properties(${name} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
+foreach(dir ${ZBASE_EXAMPLE_DIRS})
+    get_filename_component(name ${dir} NAME)
+    # 跳过独立项目和非目录
+    if(name STREQUAL "use_as_dependency")
+        continue()
+    endif()
+    if(NOT IS_DIRECTORY "${dir}")
+        continue()
+    endif()
+    if(NOT EXISTS "${dir}/CMakeLists.txt")
+        continue()
+    endif()
+    add_subdirectory(${name})
 endforeach()

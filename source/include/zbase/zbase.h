@@ -57,6 +57,15 @@ extern "C" {
  */
 ZBASE_API const char* z_version(void);
 
+/**
+ * @brief 初始化控制台为 UTF-8 编码
+ * @details Windows 下调用 SetConsoleOutputCP(CP_UTF8) + SetConsoleCP(CP_UTF8)，
+ *          解决中文输出乱码问题。POSIX 下为空操作。
+ *          可重复调用（内部幂等），程序结束时无需恢复（OS 自动处理）。
+ * @note 本项目中所有可执行程序（测试、示例）均应在 main() 开头调用此函数。
+ */
+ZBASE_API void z_init_console(void);
+
 #ifdef __cplusplus
 }
 #endif

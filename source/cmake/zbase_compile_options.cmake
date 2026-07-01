@@ -8,15 +8,16 @@ function(zbase_apply_compile_options target)
     endif()
 
     if(MSVC)
-        # /utf-8 设为 PRIVATE：避免强制依赖方继承（依赖方可能用 Clang/MinGW）
-        # 依赖方如需 UTF-8，应在自己的 CMakeLists.txt 中设置
-        target_compile_options(${target} PRIVATE /utf-8)
+        # /utf-8 用生成器表达式 PUBLIC：只在消费者为 MSVC 时传播，Clang/MinGW 不受影响
+        # 原因：zbase 头文件含中文注释，不设 /utf-8 会导致 MSVC 用 936 代码页误解析
+        target_compile_options(${target} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
         # 严格警告级别 + 标准 conformant 模式 + 多处理器编译仅对 zbase 自己生效
         target_compile_options(${target} PRIVATE /W4 /permissive- /WX- /MP)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        # 字符集约定 PRIVATE：避免强制依赖方继承
-        target_compile_options(${target} PRIVATE
-            -finput-charset=UTF-8 -fexec-charset=UTF-8
+        # 字符集约定：用生成器表达式 PUBLIC，只在相应编译器下传播
+        target_compile_options(${target} PUBLIC
+            $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-finput-charset=UTF-8>
+            $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fexec-charset=UTF-8>
         )
         # 严格警告 + 默认隐藏符号仅对 zbase 自己生效
         target_compile_options(${target} PRIVATE

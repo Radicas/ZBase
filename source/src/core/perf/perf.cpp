@@ -80,6 +80,7 @@ int z_perf_end(const char* name) {
 }
 
 void z_perf_dump(void) {
+    z_init_console();  // 确保控制台为 UTF-8，避免中文乱码
     std::lock_guard<std::mutex> lock(g_mutex);
     // 按总耗时降序排列
     std::vector<std::pair<std::string, Accumulator>> v(g_accum.begin(), g_accum.end());

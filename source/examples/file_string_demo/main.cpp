@@ -1,5 +1,5 @@
 /**
- * @file demo.cpp
+ * @file main.cpp
  * @author 朱鹏 (Radica Zhu)
  * @date 2026-06-30
  * @version 0.1.0
@@ -18,10 +18,13 @@
 #include "zbase++/perf.hpp"
 #include "zbase++/string.hpp"
 #include "zbase++/time.hpp"
+#include "zbase++/console.hpp"
 
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
+
+    zbase::InitConsole();  // 初始化控制台 UTF-8，避免中文乱码
 
     zbase::Logger logger(Z_LOG_LEVEL_DEBUG);
 
