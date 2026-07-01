@@ -12,4 +12,5 @@ build-*/
 *.exe
 .vs/
 .vscode/
+out/
 CMakeUserPresets.json
