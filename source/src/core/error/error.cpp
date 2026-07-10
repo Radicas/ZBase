@@ -28,6 +28,8 @@ namespace
         {Z_ERR_NOMEM, "内存不足"},
         {Z_ERR_OVERFLOW, "溢出"},
         {Z_ERR_UNSUPPORTED, "不支持"},
+        {Z_ERR_CRASH_ALREADY_INSTALLED, "崩溃处理器已安装"},
+        {Z_ERR_CRASH_INSTALL_FAILED, "崩溃处理器安装失败"},
         {Z_ERR_UNKNOWN, "未知错误"},
     };
 

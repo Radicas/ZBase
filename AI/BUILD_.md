@@ -25,58 +25,27 @@
 
 ## 编译
 
-### 标准构建（命令行）
+> [!IMPORTANT]
+> **AI 编译规则：必须通过项目提供的 Python 脚本编译，禁止直接使用 PowerShell/Bat/Cmd 执行 cmake 命令。**
+>
+> 编译统一使用 `source/scripts/build_project.py`：
+> ```bash
+> python source/scripts/build_project.py                    # 默认 Debug + 测试
+> python source/scripts/build_project.py --release          # Release 构建
+> python source/scripts/build_project.py --asan              # 启用 ASan
+> python source/scripts/build_project.py --no-tests          # 跳过测试
+> python source/scripts/build_project.py --clean             # 清理后构建
+> python source/scripts/build_project.py --release --no-tests  # Release + 跳过测试
+> python source/scripts/build_project.py --benchmarks        # 包含性能基准
+> ```
+>
+> 脚本自动完成：自动查找 VS 环境 (`VsDevCmd.bat`)、CMake 配置、编译、测试（可选）全流程。
+> 如需其他选项，运行 `python source/scripts/build_project.py --help` 查看完整参数列表。
 
-```bash
-# 从仓库根目录开始，源码在 source/ 子目录
-cmake -S source -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+> [!CAUTION]
+> **新增功能模块或结构变更时**，如需新增或修改编译脚本（如 CMakeLists 调整、新增构建参数等），
+> 必须同步更新 `source/scripts/build_project.py`。临时的编译辅助脚本在使用完毕后必须删除，不得提交到仓库。
 
-cmake --build build --config Release
-```
-
-### CMake 选项
-
-| 选项 | 默认 | 说明 |
-|------|------|------|
-| `BUILD_SHARED_LIBS` | `ON` | `ON` 构建动态库，`OFF` 构建静态库 |
-| `ZBASE_BUILD_TESTS` | `ON` | 构建单元测试（GoogleTest） |
-| `ZBASE_BUILD_EXAMPLES` | `ON` | 构建示例 |
-| `ZBASE_BUILD_BENCHMARKS` | `OFF` | 构建性能基准（依赖 Google benchmark 1.9.0） |
-| `CMAKE_BUILD_TYPE` | — | `Release` / `Debug` / `RelWithDebInfo` |
-| `CMAKE_INSTALL_PREFIX` | — | 安装前缀 |
-
-### Windows MSVC 构建示例
-
-```bat
-:: 1. 配置 MSVC 环境（必须）
-call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\VsDevCmd.bat" -arch=x64
-
-:: 2. 配置 + 构建
-cmake -S source -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release
-```
-
-### Windows MinGW 构建示例
-
-```bash
-cmake -S source -B build -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
-
-cmake --build build --config Release
-```
-
-### 静态库构建
-
-```bash
-cmake -S source -B build -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_SHARED_LIBS=OFF
-
-cmake --build build --config Release
-```
-
----
 
 ## 编译产物
 

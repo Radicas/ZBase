@@ -29,8 +29,10 @@ typedef enum {
     Z_ERR_ENCODING    = -5,   ///< 编码错误
     Z_ERR_NOMEM       = -6,   ///< 内存不足
     Z_ERR_OVERFLOW    = -7,   ///< 溢出
-    Z_ERR_UNSUPPORTED = -8,   ///< 不支持
-    Z_ERR_UNKNOWN     = -99,  ///< 未知错误
+    Z_ERR_UNSUPPORTED          = -8,   ///< 不支持
+    Z_ERR_CRASH_ALREADY_INSTALLED = -9,   ///< 崩溃处理器已安装
+    Z_ERR_CRASH_INSTALL_FAILED    = -10,  ///< 崩溃处理器安装失败
+    Z_ERR_UNKNOWN                = -99,  ///< 未知错误
 } z_error_t;
 
 /**
