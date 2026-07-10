@@ -99,3 +99,49 @@ jobs:
             build/CMakeFiles/CMakeError.log
           if-no-files-found: ignore
           retention-days: 7
+
+  # AddressSanitizer 内存错误检测（仅 Windows MSVC）
+  asan:
+    name: Windows / MSVC / ASan
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 CMake + Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.20.0
+          ninjaVersion: latest
+
+      - name: 配置 MSVC 环境
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: CMake 配置（ASan 模式）
+        run: |
+          cmake -S source -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Debug `
+            -DZBASE_ENABLE_ASAN=ON `
+            -DZBASE_BUILD_EXAMPLES=OFF `
+            -DZBASE_BUILD_BENCHMARKS=OFF
+
+      - name: 构建
+        run: cmake --build build --config Debug
+
+      - name: 测试（ASan 检测中）
+        working-directory: build
+        run: ctest --output-on-failure
+
+      - name: 上传测试日志（失败时）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asan-log-msvc
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+          if-no-files-found: ignore
+          retention-days: 7

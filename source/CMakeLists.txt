@@ -23,6 +23,7 @@ option(ZBASE_BUILD_BENCHMARKS "构建性能基准（默认 OFF，依赖 Google b
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(zbase_options)
 include(zbase_compile_options)
+include(zbase_sanitizers)
 
 # 源码查找：禁止硬编码，必须用 file(GLOB_RECURSE)
 file(GLOB_RECURSE ZBASE_SOURCES CONFIGURE_DEPENDS
@@ -50,6 +51,7 @@ target_compile_features(zbase_objects PUBLIC cxx_std_20)
 
 # 应用编译选项
 zbase_apply_compile_options(zbase_objects)
+zbase_enable_sanitizers(zbase_objects)
 
 # 编译 zbase 源文件时定义 ZBASE_EXPORTS，让 ZBASE_API 在头文件里展开为 dllexport
 # （OBJECT 库的 .obj 同时被 zbase.dll 链接和测试 .exe 链接；ZBASE_EXPORTS 只影响声明）
@@ -75,6 +77,7 @@ target_compile_features(zbase PUBLIC cxx_std_20)
 # 让 zbase 消费者（如 demo.exe）继承 /utf-8 等公共编译选项
 # OBJECT 库的 INTERFACE 属性不会自动传播到 $<TARGET_OBJECTS:..> 消费者
 zbase_apply_compile_options(zbase)
+zbase_enable_sanitizers(zbase)
 
 # 动态库构建时也给 zbase 目标本身加 ZBASE_EXPORTS（防御性，避免某些 IDE 重新编译时漏掉）
 if(BUILD_SHARED_LIBS)
@@ -103,6 +106,7 @@ if(ZBASE_BUILD_TESTS)
     add_subdirectory(thirdparty/googletest-1.17.0 EXCLUDE_FROM_ALL)
     set(BUILD_SHARED_LIBS ${_zbase_prev_build_shared} CACHE BOOL "" FORCE)
     add_subdirectory(tests)
+    zbase_enable_sanitizers(zbase_tests)
 endif()
 
 # 示例

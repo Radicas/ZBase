@@ -1,7 +1,7 @@
 # 构建产物
 build/
 build-*/
-build-*/
+build_*/
 install-test/
 
 # 编译中间文件
@@ -31,3 +31,6 @@ zbase_test_*
 zbase_demo_*
 zbase_integration_*
 zbase_cpp_*
+
+# 临时构建脚本
+_temp_*.bat
