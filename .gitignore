@@ -3,6 +3,10 @@ build/
 build-*/
 build_*/
 install-test/
+install/
+
+# 安装目录（可能的安装目标路径）
+source/install/
 
 # 编译中间文件
 *.obj
