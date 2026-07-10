@@ -19,6 +19,8 @@
 // ============================================
 #ifdef _WIN32
 
+#include <DbgHelp.h>
+
 namespace {
 
 /// dbghelp.dll 函数指针类型

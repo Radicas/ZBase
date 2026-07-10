@@ -557,7 +557,7 @@ void HandleCrash(const char* signame,
 
 namespace {
 
-LONG WINAPI UnhandledExceptionFilter(EXCEPTION_POINTERS* ex_info)
+LONG WINAPI ZBaseCrashExceptionFilter(EXCEPTION_POINTERS* ex_info)
 {
     DWORD code = ex_info->ExceptionRecord->ExceptionCode;
     void* addr = ex_info->ExceptionRecord->ExceptionAddress;
@@ -643,7 +643,7 @@ int z_crash_install(const z_crash_config_t* config)
 
 #ifdef _WIN32
     // Windows：使用 UnhandledExceptionFilter
-    g_prev_filter = SetUnhandledExceptionFilter(UnhandledExceptionFilter);
+    g_prev_filter = SetUnhandledExceptionFilter(ZBaseCrashExceptionFilter);
 #else
     // POSIX：注册信号处理器
     struct sigaction sa;
