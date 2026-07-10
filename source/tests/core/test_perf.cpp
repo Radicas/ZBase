@@ -122,12 +122,13 @@ TEST(Perf, Iterate_Empty) {
 
 TEST(Perf, Iterate_VisitsAllSorted) {
     z_perf_reset();
-    // slow 总耗时 ~10ms，fast 总耗时 ~2ms；iterate 应按总耗时降序访问
+    // slow 总耗时约 50ms，fast 总耗时约 5ms；iterate 应按总耗时降序访问
+    // 间隔拉开到远超过 Windows 默认时钟滴答（15.6ms），避免精度导致不稳定
     EXPECT_EQ(z_perf_start("slow"), Z_OK);
-    z_time_sleep_ms(10);
+    z_time_sleep_ms(50);
     EXPECT_EQ(z_perf_end("slow"), Z_OK);
     EXPECT_EQ(z_perf_start("fast"), Z_OK);
-    z_time_sleep_ms(2);
+    z_time_sleep_ms(5);
     EXPECT_EQ(z_perf_end("fast"), Z_OK);
 
     IterateCollector c;

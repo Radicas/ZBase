@@ -53,6 +53,22 @@ struct FileState {
 FileState   g_file;             ///< 全局文件状态
 std::mutex  g_file_mutex;       ///< 保护 g_file 的所有访问
 
+/// 获取 ANSI 颜色码（仅控制台使用，文件输出不加颜色）
+/// @param l 日志级别
+/// @return ANSI 转义序列字符串
+const char* AnsiColor(z_log_level_t l) {
+    switch (l) {
+        case Z_LOG_LEVEL_DEBUG: return "\033[2m";    // 暗色（dim）
+        case Z_LOG_LEVEL_INFO:  return "";            // 无颜色
+        case Z_LOG_LEVEL_WARN:  return "\033[1;33m";  // 亮黄色
+        case Z_LOG_LEVEL_ERROR: return "\033[1;31m";  // 亮红色
+        default:                return "";
+    }
+}
+
+/// ANSI 复位序列
+constexpr const char* ANSI_RESET = "\033[0m";
+
 /// 获取级别名称
 /// @param l 日志级别
 /// @return 静态字符串
@@ -112,7 +128,7 @@ bool RenameFileUtf8(const std::string& src, const std::string& dst) {
 }
 
 /// 跨平台 UTF-8 路径删除
-/// @param path 路径
+/// @param path UTF-8 路径
 /// @return true 成功或文件不存在；false 失败
 bool RemoveFileUtf8(const std::string& path) {
 #ifdef _WIN32
@@ -122,6 +138,25 @@ bool RemoveFileUtf8(const std::string& path) {
 #else
     return std::remove(path.c_str()) == 0;
 #endif
+}
+
+/// 跨平台 UTF-8 路径文件存在判断
+/// @param path UTF-8 路径
+/// @return true 存在且为常规文件；false 不存在或为目录
+bool FileExistsUtf8(const std::string& path) {
+    auto fs_path = ToFsPath(path);
+    return fs_path.empty() ? false : std::filesystem::exists(fs_path) && std::filesystem::is_regular_file(fs_path);
+}
+
+/// 跨平台 UTF-8 路径获取文件大小
+/// @param path UTF-8 路径
+/// @return 文件字节数；文件不存在或出错时返回 0
+uint64_t GetFileSizeUtf8(const std::string& path) {
+    auto fs_path = ToFsPath(path);
+    if (fs_path.empty()) return 0;
+    std::error_code ec;
+    auto size = std::filesystem::file_size(fs_path, ec);
+    return ec ? 0 : size;
 }
 
 /// 触发滚动：关闭当前文件 → 倒序重命名 → 重新打开空文件
@@ -139,27 +174,42 @@ void RollFiles() {
 
     // 2. 倒序重命名 path.(N-1) → path.N, ..., path.1 → path.2
     //    每一步目标在上一轮已被清空（要么原本不存在，要么已被移走）
+    //    Windows 上 Defender 可能瞬时占用刚 close 的文件，加重试避免竞态
     for (int32_t i = static_cast<int32_t>(N) - 1; i >= 1; --i) {
         std::string src = g_file.path + "." + std::to_string(i);
         std::string dst = g_file.path + "." + std::to_string(i + 1);
-        RenameFileUtf8(src, dst);  // 源不存在时静默失败
+        // 源文件不存在时无需重试，直接跳过
+        if (!FileExistsUtf8(src)) continue;
+        for (int retry = 0; retry < 5; ++retry) {
+            if (RenameFileUtf8(src, dst)) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
 
-    // 3. 当前 path → path.1
+    // 3. 当前 path → path.1（加重试，同上理由）
     std::string dst1 = g_file.path + ".1";
-    RenameFileUtf8(g_file.path, dst1);
+    bool rolled = false;
+    for (int retry = 0; retry < 5; ++retry) {
+        if (RenameFileUtf8(g_file.path, dst1)) {
+            rolled = true;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 
     // 4. 重新打开空 path（截断模式）
-    //    Windows 下 Defender 偶发锁定刚被 rename 的路径，导致瞬时打开失败。
-    //    重试 3 次（每次间隔 5ms）以跨过瞬时锁；全部失败才禁用文件输出。
-    for (int retry = 0; retry < 3; ++retry) {
-        if (OpenOfstreamUtf8(g_file.path, std::ios::binary | std::ios::out | std::ios::trunc)) {
-            g_file.current_size = 0;
+    //    如果步骤 3 失败（文件仍被占用），以 append 模式重新打开，避免截断丢失日志
+    auto reopen_mode = rolled
+        ? (std::ios::binary | std::ios::out | std::ios::trunc)
+        : (std::ios::binary | std::ios::out | std::ios::app);
+    for (int retry = 0; retry < 10; ++retry) {
+        if (OpenOfstreamUtf8(g_file.path, reopen_mode)) {
+            g_file.current_size = rolled ? 0 : GetFileSizeUtf8(g_file.path);
             return;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-    // 3 次重试均失败：禁用文件输出（避免后续每次写都尝试打开）
+    // 所有重试均失败：禁用文件输出（避免后续每次写都尝试打开）
     g_file.enabled = false;
 }
 
@@ -210,9 +260,11 @@ void z_log_write(z_log_level_t level, const char* file, int line,
     std::vsnprintf(user_buf, sizeof(user_buf), fmt, args);
     va_end(args);
 
-    // 完整日志行（stderr 用 fprintf）
-    std::fprintf(stderr, "[%s] [%s] [%s:%d] %s\n",
-                 time_buf, LevelName(level), base, line, user_buf);
+    // 完整日志行（stderr 用 fprintf，带 ANSI 颜色）
+    const char* color = AnsiColor(level);
+    std::fprintf(stderr, "%s[%s] [%s] [%s:%d] %s%s\n",
+                 color, time_buf, LevelName(level), base, line, user_buf,
+                 color[0] ? ANSI_RESET : "");
     std::fflush(stderr);
 
     // 文件输出（持锁）

@@ -16,6 +16,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <string>
 
 namespace {
@@ -31,8 +32,10 @@ std::string ReadAll(const std::string& path) {
 }
 
 /// 删除文件（不存在时静默）
+/// 使用 std::filesystem::remove 正确处理 Windows UTF-8 路径
 void RemoveAll(const std::string& path) {
-    std::remove(path.c_str());
+    std::error_code ec;
+    std::filesystem::remove(std::filesystem::u8path(path), ec);
 }
 
 /// 清理 path 及其滚动文件 path.1 ~ path.N

@@ -109,10 +109,14 @@ void z_perf_iterate(z_perf_visit_fn visit, void* user_data) {
     if (visit == nullptr) return;
     try {
         std::lock_guard<std::mutex> lock(g_mutex);
-        // 按总耗时降序排列
+        // 按总耗时降序排列；耗时相同时按名字升序保证稳定排序
         std::vector<std::pair<std::string, Accumulator>> v(g_accum.begin(), g_accum.end());
         std::sort(v.begin(), v.end(),
-            [](const auto& a, const auto& b) { return a.second.total_ns > b.second.total_ns; });
+            [](const auto& a, const auto& b) {
+                if (a.second.total_ns != b.second.total_ns)
+                    return a.second.total_ns > b.second.total_ns;
+                return a.first < b.first;
+            });
         for (const auto& [name, acc] : v) {
             visit(name.c_str(), acc.total_ns, acc.count, user_data);
         }
